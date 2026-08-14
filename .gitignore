@@ -1,11 +1,11 @@
 # Ignore everything in the directory
-*
+/*
 
 # Exempt the LABS directory and its contents
-!LABS/
+!/LABS/
 
 # Exempt the aic_lectures_pdf directory and its contents
-!aic_lectures_pdf/
-!annonated/
+!/aic_lectures_pdf/
+!/annonated/
 # Exempt the .gitignore file itself so it gets uploaded to GitHub
 !.gitignore

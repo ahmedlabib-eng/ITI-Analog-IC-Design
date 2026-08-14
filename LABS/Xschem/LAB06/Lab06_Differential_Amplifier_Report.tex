@@ -1,0 +1,615 @@
+\documentclass[11pt]{article}
+
+% ================= PACKAGES =================
+\usepackage[a4paper,margin=2.3cm,headheight=22pt]{geometry}
+\usepackage{fancyhdr}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{titlesec}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{colortbl}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{tabularx}
+
+% ================= COLORS =================
+\definecolor{itiTeal}{RGB}{0,105,110}
+\definecolor{itiCrimson}{RGB}{160,20,40}
+\definecolor{itiGray}{RGB}{90,90,90}
+\definecolor{boxbg}{RGB}{235,247,247}
+
+% ================= HYPERLINKS =================
+\hypersetup{
+    colorlinks=true,
+    linkcolor=itiTeal,
+    citecolor=itiTeal,
+    urlcolor=itiCrimson,
+    pdftitle={Lab 06 - Differential Amplifier},
+    pdfauthor={Ahmed Labib}
+}
+
+% ================= SECTION STYLING =================
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{itiTeal}}
+  {\thesection}{1em}{}[{\color{itiTeal}\titlerule[1pt]}]
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{itiCrimson}}
+  {\thesubsection}{1em}{}
+\titleformat{\subsubsection}
+  {\normalfont\bfseries\color{itiGray}}
+  {\thesubsubsection}{1em}{}
+
+% ================= HEADER / FOOTER =================
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.8pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{itiTeal}\leaders\hrule height \headrulewidth\hfill}}
+\fancyhead[L]{\small\color{itiGray} Analog IC Design -- Lab 06}
+\fancyhead[R]{\small\color{itiGray} Differential Amplifier}
+\fancyfoot[C]{\small\color{itiGray} \thepage}
+\fancyfoot[R]{\small\color{itiTeal} ITI}
+
+% ================= QUESTION/ANSWER BOX =================
+\newtcolorbox{qbox}[1][]{
+  breakable,
+  colback=boxbg,
+  colframe=itiTeal,
+  boxrule=0.8pt,
+  arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt,
+  title={\textbf{Question:}},
+  fonttitle=\color{itiTeal}\bfseries,
+  coltitle=itiTeal,
+  attach boxed title to top left={xshift=6pt,yshift=-2mm},
+  boxed title style={colback=boxbg,colframe=boxbg},
+  #1
+}
+
+\newcommand{\answer}[1]{
+  \par\vspace{2pt}
+  \noindent\textbf{\color{itiCrimson}My answer:} #1
+  \vspace{6pt}
+}
+
+\newcolumntype{Y}{>{\centering\arraybackslash}X}
+
+% ================= DOCUMENT =================
+\begin{document}
+
+% ---------------- COVER PAGE ----------------
+\begin{titlepage}
+\centering
+\vspace*{0.5cm}
+{\color{itiTeal}\rule{\linewidth}{2pt}}\\[0.3cm]
+{\large \color{itiGray} Information Technology Institute (ITI)}\\
+{\large \color{itiGray} Analog IC Design Track -- Xschem, Ngspice, ADT}\\[0.3cm]
+{\color{itiTeal}\rule{\linewidth}{2pt}}\\[2cm]
+
+{\Huge \bfseries \color{itiTeal} Lab 06}\\[0.4cm]
+{\Huge \bfseries \color{itiCrimson} Differential Amplifier}\\[1.2cm]
+
+{\large Design, Small-Signal, and Large-Signal Simulation\\ of a Resistive-Loaded PMOS Differential Pair}\\[2cm]
+
+\begin{tcolorbox}[colback=boxbg,colframe=itiTeal,width=0.7\linewidth,arc=3pt,boxrule=1pt]
+\centering
+\textbf{Prepared by:} Ahmed Labib \\[4pt]
+\textbf{Program:} Analog IC Design (ITI) \\[4pt]
+\textbf{Tools used:} Xschem, Ngspice, Sizing Assistant, gf180mcuC PDK \\[4pt]
+\textbf{Instructor:} Dr. Hesham Omran \\[4pt]
+\textbf{Reviewer:} Dr. Sameh A. Ibrahim
+\end{tcolorbox}
+
+\vfill
+{\color{itiGray}\today}\\[0.3cm]
+{\color{itiTeal}\rule{\linewidth}{2pt}}
+\end{titlepage}
+
+% ---------------- TOC ----------------
+\tableofcontents
+\newpage
+
+% ================= OBJECTIVES =================
+\section*{Intended Learning Objectives}
+\addcontentsline{toc}{section}{Intended Learning Objectives}
+In this lab I learned how to:
+\begin{itemize}[leftmargin=*]
+  \item Design a differential amplifier using the Sizing Assistant (SA).
+  \item Simulate the small-signal differential characteristics of a diff amp.
+  \item Simulate the small-signal common-mode characteristics of a diff amp.
+  \item Simulate the large-signal differential characteristics of a diff amp.
+  \item Simulate the large-signal common-mode characteristics of a diff amp.
+\end{itemize}
+
+\newpage
+% ======================================================================
+\section{Part 1: Differential Amplifier Design}
+% ======================================================================
+
+\subsection{Design Specifications}
+The target specs given in the lab handout are:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Supply ($V_{DD}$) & 1.8 V \\
+Current seed (ref. current) & 20 $\mu$A \\
+Bias current ($I_{SS}$) & 40 $\mu$A (20 $\mu$A per side) \\
+Differential gain & 8 V/V \\
+CM output level & $V_{DD}/3 = 0.6$ V \\
+Load capacitance & 1 pF \\
+\bottomrule
+\end{tabular}
+\caption{Differential amplifier design specifications}
+\end{table}
+
+Since the output level (0.6 V) is close to ground, I used a \textbf{PMOS input pair} (so the output naturally
+sits near ground through the resistive load), with a simple PMOS current mirror as the tail bias, not placed
+in a dedicated well (to save area) -- so the input pair transistors will see a body effect since their source
+isn't tied to $V_{DD}$.
+
+\subsection{Choosing $R_D$}
+\begin{qbox}
+Choose $R_D$ to meet the CM output level spec.
+\end{qbox}
+\answer{Current flows from $V_{DD}$ through the tail PMOS, splits into the two input-pair transistors, then
+each half current goes through its own $R_D$ to ground. So $V_{OUT-CM} = I_D \cdot R_D$, and since $I_D = 20\mu A$
+per branch:}
+
+\begin{equation}
+R_D = \frac{V_{OUT-CM}}{I_D} = \frac{0.6\text{ V}}{20\mu A} = \boxed{30\text{ k}\Omega}
+\end{equation}
+
+\subsection{Setting $r_o$ and Finding $g_m/I_D$}
+\begin{qbox}
+We will choose $L$ to set $r_o \gg R_D \rightarrow r_o = 10 \times R_D$. Choose $g_m/I_D$ to meet the differential
+gain spec.
+\end{qbox}
+\answer{With $r_o = 10 R_D$, the gain formula $|A_v| \approx g_m(R_D||r_o)$ simplifies to $|A_v| \approx 0.91\, g_m R_D$.
+Writing $g_m R_D = (g_m/I_D)\cdot I_D \cdot R_D = (g_m/I_D)\cdot V_{RD}$ where $V_{RD}=I_D R_D=0.6$V, I solve for the
+required $g_m/I_D$:}
+
+\begin{equation}
+\frac{g_m}{I_D} = \frac{|A_v|}{0.91 \times V_{RD}} = \frac{8}{0.91 \times 0.6} = \boxed{14.65\ \text{V}^{-1}}
+\end{equation}
+
+This is exactly the value I typed into the Sizing Assistant's \texttt{gm/ID} field as \texttt{8/(0.91*0.6)}.
+
+\subsection{Input Pair Sizing via Sizing Assistant}
+\begin{qbox}
+Assume we will set $V_{DS}$ of the tail current source to 300 mV to allow more output swing.
+Report the input pair sizing and gm/ID using SA.
+\end{qbox}
+\answer{I opened the SA with LUT = pmos\_03v3, and entered: $I_D=20\mu A$, $g_m/I_D = 8/(0.91\times 0.6)=14.65$,
+$r_o = 10\times(0.6/I_D)$, $V_{DS} = V_{DD}-V_{DS,tail}-V_{OUT-CM} = 1.8-0.3-0.6 = 0.9$ V, and $V_{SB}=0.3$ V
+(since the body is tied to $V_{DD}$ but the source sits 0.3 V below the tail node, no dedicated well). The result:}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/input_sizing.png}
+\caption{Sizing Assistant log for the input pair (pmos\_03v3, gm/ID method)}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+$L$ (LP2) & 350 nm \\
+$W$ (WP2) & 30 $\mu$m \\
+$V_{TH}$ & 870.2 mV \\
+$V_{GS}$ & 941.1 mV \\
+$V_{STAR}=V_{ov}$ & 140.5 mV \\
+$G_M$ & 284.8 $\mu$A/V \\
+$V_{DSAT}$ & 122.5 mV \\
+\bottomrule
+\end{tabular}
+\caption{Input pair sizing result from SA}
+\end{table}
+
+\subsection{Common-Mode Input Level}
+\begin{qbox}
+Given the above assumption for $V_{DS}$ of the tail current source, calculate the required CM input level.
+\end{qbox}
+\answer{The tail node sits at $V_{s,cm}=V_{DD}-V_{DS,tail}=1.8-0.3=1.5$ V. The input pair source-gate voltage
+is $V_{SG}=V_{GS}=941.1$ mV (from the SA result above). So:}
+
+\begin{equation}
+V_{ICM} = V_{s,cm} - V_{SG} = 1.5 - 0.9411 = \boxed{0.559\text{ V}}
+\end{equation}
+
+This is the value I used everywhere afterward as \texttt{VICM\_DC}.
+
+\subsection{Tail Current Source Design}
+
+\begin{qbox}
+For the tail current source, use: input current $=20\mu A$, mismatch $\sigma(I_{out})/I_{out}\le2\%$,
+$\lambda = 0.1$, compliance voltage $\le 200$ mV, minimize area. Use SA to plot the sizing at a constant
+$\sigma(I_{out})/I_{out}$.
+\end{qbox}
+\answer{The mirror output transistor (M2, carrying the 40$\mu$A tail current) has \emph{twice} the area of
+the reference transistor (M3, carrying 20$\mu$A), so $m=2$ in the mismatch formula:}
+
+\begin{equation}
+\frac{\sigma(I_{out})}{I_{out}} = \sqrt{1+\frac{1}{m}}\cdot\frac{idmis}{I_D}\times 100
+ = \sqrt{1.5}\cdot\frac{idmis}{I_D}\times 100
+\end{equation}
+
+I plotted $L$, $W$, $AREA$ and $\lambda$ vs $g_m/I_D$ for both the 1\% and 2\% mismatch curves:
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/tail_mis.png}
+\caption{SA sweep: $L$, $W$, $\lambda$, $Area$ vs $g_m/I_D$ for 1\% and 2\% mismatch curves, cursor at $g_m/I_D=10$}
+\end{figure}
+
+\subsubsection{Picking the operating $g_m/I_D$ from the compliance spec}
+\answer{Compliance voltage is the $V_{ov}$ of the mirror, so $V_{star} \le 200$mV means $g_m/I_D \ge 2/0.2 = 10$.
+Since minimum area \emph{and} minimum mismatch both happen at the lowest allowed $g_m/I_D$ (largest $V^*$),
+I picked $\boxed{g_m/I_D = 10}$ exactly at the compliance boundary.}
+
+\subsubsection{1\% vs 2\% mismatch curve}
+\begin{qbox}
+In order to satisfy both the mismatch and lambda requirements, which design curve will you pick, the 1\%
+or the 2\% mismatch?
+\end{qbox}
+\answer{Reading the cursors on Plot 2C at $g_m/I_D=10$:}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Curve} & \textbf{$\lambda$ @ $g_m/I_D=10$} & \textbf{Meets $\lambda\le0.1$?} & \textbf{Decision} \\
+\midrule
+1\% mismatch & 90.77 m & Yes (0.0908 $<$ 0.1) & \cellcolor{boxbg}\textbf{Picked} \\
+2\% mismatch & 133.7 m & No (0.1337 $>$ 0.1) & Rejected \\
+\bottomrule
+\end{tabular}
+\caption{Mismatch curve comparison at the compliance-limited $g_m/I_D=10$}
+\end{table}
+
+So even though the mismatch spec only asks for $\le2\%$, only the 1\% curve actually satisfies the $\lambda\le0.1$
+requirement at $g_m/I_D=10$ -- so I \textbf{had to} go with the 1\% curve. This costs extra area (longer $L$) but
+it's the only option that meets both specs together.
+
+\subsubsection{Final tail sizing}
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.55\linewidth]{figures/tail_sizing.png}
+\caption{Final SA settings/result for the tail mirror on the 1\% mismatch curve at $g_m/I_D=10$}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+$L$ (reference \& mirror) & 1.03 $\mu$m \\
+$W$ (reference, WP1) & 41.28 $\mu$m \\
+$W$ (mirror output, $2\times$WP1) & 82.56 $\mu$m \\
+$V_{GS}$ & 942.3 mV \\
+$V_{DS}$ & 300 mV \\
+$\lambda$ & 90.77 m \\
+\bottomrule
+\end{tabular}
+\caption{Final tail current source sizing}
+\end{table}
+
+\subsection{CMIR Hand Calculation}
+\begin{qbox}
+Calculate the min and max CM input levels. Is the previously selected CM input level in the valid range?
+\end{qbox}
+\answer{Using $V_{ov,tail}=0.2$V (from compliance) and $V_{ov,pair}=140.5$mV (from the input pair SA result):
+\begin{itemize}[leftmargin=*]
+  \item $V_{ICM,max} \approx V_{DD} - V_{ov,tail} = 1.8-0.2 = 1.6$ V
+  \item $V_{ICM,min} \approx V_{OUT-CM} + V_{ov,pair} = 0.6+0.1405 = 0.74$ V
+\end{itemize}
+My chosen $V_{ICM}=0.559$V looks like it's \emph{below} this naive $V_{ICM,min}$ estimate -- so on paper it seems
+out of range! I flagged this and came back to it in Part 2 (the simple hand estimate turns out to be too
+conservative/wrong on the min side -- see Section~\ref{sec:cmir-region}).}
+
+\newpage
+% ======================================================================
+\section{Part 2: Differential Amplifier Simulation}
+% ======================================================================
+
+\subsection{Testbench Schematic}
+I built the testbench with \texttt{asrc} elements to combine/separate the differential and common-mode signals
+instead of ideal baluns (as hinted in the lab), and instantiated my \texttt{diff\_amp} subcircuit with the sizing
+from Part 1: WP1=41.28$\mu$, LP1=1.03$\mu$, WP2=30$\mu$, LP2=350n, RD=30k.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/symbol_op.png}
+\caption{Testbench schematic: asrc combiners B1/B2 at the input, B3/B4 at the output}
+\end{figure}
+
+\subsection{OP Simulation}
+\begin{qbox}
+Report the schematic of the diff pair with DC OP point clearly annotated. Check that all transistors operate
+in saturation.
+\end{qbox}
+\answer{I edited the transistor symbols to add the gm/ID tcleval annotation, then ran the OP simulation:}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figures/op_ann.png}
+\caption{Annotated OP point on the diff amp schematic}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{lccccc}
+\toprule
+\textbf{Param} & \textbf{M1 (input)} & \textbf{M4 (input)} & \textbf{M2 (mirror out)} & \textbf{M3 (ref, diode)} \\
+\midrule
+$I_D$        & 19.54 $\mu$A & 19.54 $\mu$A & 39.07 $\mu$A & 20.00 $\mu$A \\
+$V_{GS}$     & 940.9 mV     & 940.9 mV     & 939.3 mV     & 939.3 mV \\
+$V_{DS}$     & 913.8 mV     & 913.8 mV     & 300.1 mV     & 939.3 mV \\
+$V_{TH}$     & 874.1 mV     & 874.1 mV     & 783.4 mV     & 783.4 mV \\
+$V_{DSAT}$   & 119.2 mV     & 119.2 mV     & 152.7 mV     & 152.7 mV \\
+$V^*$ (=2/gmID) & 137.0 mV  & 137.0 mV     & 197.0 mV     & 196.5 mV \\
+$g_m/I_D$    & 14.60        & 14.60        & 10.15        & 10.18 \\
+$G_M$        & 285.2 $\mu$A/V & 285.2 $\mu$A/V & 396.6 $\mu$A/V & 203.6 $\mu$A/V \\
+$G_{DS}$     & 3.127 $\mu$A/V & 3.127 $\mu$A/V & 3.437 $\mu$A/V & 447.9 nA/V \\
+$G_{MB}$     & 92.79 $\mu$A/V & 92.79 $\mu$A/V & 187.6 $\mu$A/V & 96.3 $\mu$A/V \\
+\midrule
+Region       & \multicolumn{4}{c}{\textbf{All 4 transistors: $V_{DS} > V_{DSAT}$ $\Rightarrow$ SATURATION} $\checkmark$} \\
+\bottomrule
+\end{tabular}
+\caption{OP simulation results for all four transistors}
+\end{table}
+
+Nice, the input pair sits almost exactly at my designed $g_m/I_D\approx14.65$ (sim gives 14.60, tiny rounding
+difference), and the tail devices sit right at $g_m/I_D\approx10.15$-$10.18$ as designed. Also notice $I_D(M2)=39.07\mu A$,
+which is basically $40\mu A$ split between M1/M4 (19.54+19.54=39.07) -- the small deviation from the ideal
+20+20=40 is just because of the finite $\lambda$ of the tail mirror (not a perfectly ideal current source).
+
+\subsection{Differential Small-Signal AC Analysis}
+\begin{qbox}
+Run AC analysis (1Hz:10GHz). Report the Bode plot of small signal diff gain. Compare the DC diff gain and BW
+with hand analysis in a table.
+\end{qbox}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/diff_ac.png}
+\caption{Differential AC gain Bode plot (dB), -3dB point marked at 5.663 MHz}
+\end{figure}
+
+\answer{For the hand-analysis comparison I used the actual simulated $G_M$ and $G_{DS}$ of M1 from the OP table
+above (instead of the ideal design targets), since that's what the real circuit does:
+$r_o = 1/g_{ds} = 1/3.127\mu = 319.8$ k$\Omega$, so $R_D||r_o = 30\text{k}||319.8\text{k}=27.63$ k$\Omega$.}
+
+\begin{align}
+|A_{v,diff}|_{hand} &= g_m (R_D||r_o) = 285.2\mu \times 27.63\text{k} = 7.88\ \text{V/V} = 17.93\text{ dB} \\
+f_{-3dB,hand} &= \frac{1}{2\pi (R_D||r_o) C_L} = \frac{1}{2\pi \times 27.63\text{k}\times 1\text{p}} = 5.76\text{ MHz}
+\end{align}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Quantity} & \textbf{Hand Analysis} & \textbf{Simulation} \\
+\midrule
+DC diff gain (V/V) & 7.88 & 7.82 \\
+DC diff gain (dB)  & 17.93 & 17.865 \\
+Bandwidth (MHz)    & 5.76 & 5.684 \\
+\bottomrule
+\end{tabular}
+\caption{Differential gain \& BW: hand analysis vs simulation}
+\end{table}
+
+Very close match (within about 1\%), so I'm confident the design and simulation setup are correct.
+
+\subsection{Common-Mode Small-Signal AC Analysis}
+\begin{qbox}
+Report the Bode plot of small signal CM gain. Compare the DC CM gain with hand analysis. Is it smaller than
+``1''? Why? Justify the variation of $A_{vcm}$ vs frequency. Plot $A_{vd}/A_{vcm}$ in dB and compare with
+hand analysis. Justify the variation with frequency.
+\end{qbox}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/cm_ac.png}
+\caption{CM AC gain Bode plot (dB) -- flat at low freq, peaks around tens of MHz, then rolls off}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.7\linewidth]{figures/cm_ac_phase.png}
+\caption{CM AC phase response}
+\end{figure}
+
+\answer{The CM gain of a symmetric resistive-loaded diff pair is set by the \emph{finite} output resistance
+of the tail current source, $R_{ss}=r_{o,tail}=1/g_{ds,M2}=1/3.437\mu=290.9$ k$\Omega$:}
+
+\begin{equation}
+A_{vcm,hand} \approx \frac{-R_D}{2R_{ss}+1/g_{m1}} = \frac{-30\text{k}}{2(290.9\text{k})+1/285.2\mu}
+ = \frac{-30\text{k}}{585.3\text{k}} = -0.0513\ \text{V/V} = -25.8\text{ dB}
+\end{equation}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Quantity} & \textbf{Hand Analysis} & \textbf{Simulation} \\
+\midrule
+$A_{vcm}$ (dB) & $-25.8$ & $-28.3$ \\
+CMRR (dB)  & $17.93-(-25.8)=43.7$ & 46.18 \\
+\bottomrule
+\end{tabular}
+\caption{CM gain \& CMRR: hand analysis vs simulation}
+\end{table}
+
+\textbf{Is $A_{vcm}<1$? Why:} Yes, $|A_{vcm}|\approx0.038$ V/V, way less than 1. That's because $R_{ss}$ is
+large (ideally infinite for a perfect current source), so the term $2R_{ss}$ dominates the denominator and
+crushes the CM gain almost to zero -- that's exactly the point of using a current-source tail: it makes the
+circuit reject common-mode signals.
+
+\textbf{Why the peak around tens of MHz:} At the tail node there's parasitic capacitance $C_{tail}$ (junction
+caps of the tail drain + input pair sources). At low frequency the tail impedance is just $R_{ss}$, but as
+frequency goes up, $C_{tail}$ starts shunting $R_{ss}$ so the \emph{effective} tail impedance drops:
+$Z_{tail}(s)=R_{ss}/(1+sR_{ss}C_{tail})$. Since $|A_{vcm}|\propto 1/Z_{tail}$ roughly, a falling $Z_{tail}$ means
+$|A_{vcm}|$ \emph{rises} with frequency -- that's my peak. Eventually the $R_D\|C_L$ output pole takes over and
+rolls everything back down.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/cmrr.png}
+\caption{$A_{vd}/A_{vcm}$ (CMRR) in dB vs frequency}
+\end{figure}
+
+\textbf{Why CMRR degrades with frequency:} CMRR = $A_{vd}(dB) - A_{vcm}(dB)$. $A_{vd}$ stays flat until its
+own pole at 5.68 MHz then rolls off, while $A_{vcm}$ is \emph{rising} in that same general region because of
+the tail-node pole/zero I explained above. Both effects push CMRR down together, so it drops smoothly from
+46.18 dB at DC all the way down to a few dB at 10 GHz -- makes sense, at very high frequency neither the
+differential path nor the CM rejection mechanism works anymore.
+
+\subsection{Differential Large-Signal Characteristics}
+\begin{qbox}
+Use a DC sweep for $V_{id}=-V_{DD}:10m:V_{DD}$. Report diff large signal ccs. Compare extreme values with
+hand analysis. Plot deriv() of VODIFF vs VIDIFF, what's the peak value? Why?
+\end{qbox}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/dc_sweep_vodiff.png}
+\caption{Large-signal differential transfer characteristic (VODIFF vs VIDIFF)}
+\end{figure}
+
+\answer{The output saturates at about $\pm1.2$V. This makes total sense by hand: when $V_{id}$ gets large
+enough, one input transistor turns completely off and \emph{all} the tail current $I_{SS}=40\mu A$ flows
+through the other branch, so the max output swing is:}
+
+\begin{equation}
+\Delta V_{OUT,max} = I_{SS}\times R_D = 40\mu A \times 30\text{k} = 1.2\text{ V}
+\end{equation}
+
+which matches the simulated $\pm1.2$V saturation levels basically exactly.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/dc_sweep_deriv.png}
+\caption{deriv(VODIFF) vs VIDIFF, peak = 78.13 mV}
+\end{figure}
+
+\answer{The peak reading on the graph is 78.13m, but since \texttt{deriv()} in ngspice differentiates with
+respect to the sweep \emph{index}, not the actual step voltage, I need to divide by the sweep step (10mV) to
+get the real slope in V/V:}
+
+\begin{equation}
+\left.\frac{dV_{ODIFF}}{dV_{IDIFF}}\right|_{peak} = \frac{78.13\text{m}}{10\text{m}} = 7.813\ \text{V/V}
+\end{equation}
+
+This matches the AC differential gain from Section 3.3 ($A_{vd}=7.82$ V/V) almost exactly! That makes total
+sense -- the peak of the large-signal slope \emph{is} the small-signal gain, and it happens right at
+$V_{IDIFF}=0$ where the diff pair is perfectly balanced (max transconductance point). As $V_{id}$ moves away
+from 0, one side starts turning off and the effective $g_m$ (and hence the slope) drops off.
+
+\subsection{CM Large-Signal Characteristics -- Region vs $V_{ICM}$}
+\label{sec:cmir-region}
+\begin{qbox}
+Use DC sweep for $V_{ICM}=-1:10m:V_{DD}$. Plot VDS and Vdsat for the input pair and tail source. Find CMIR
+and compare with hand analysis. Why is the min VICM not as expected?
+\end{qbox}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{figures/vicm_min.png}
+\caption{Input pair (M1): $V_{DS}$ vs $V_{DSAT}$ vs $V_{ICM}$ -- crossing at $V_{ICM}=-0.436$V sets $V_{ICM,min}$}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\linewidth]{figures/vicm_max.png}
+\caption{Tail transistor (M2): $V_{DS}$ vs $V_{DSAT}$ vs $V_{ICM}$ -- crossing at $V_{ICM}=0.760$V sets $V_{ICM,max}$}
+\end{figure}
+
+\answer{So by simulation: $V_{ICM,min}=-0.436$V (input pair leaves saturation) and $V_{ICM,max}=0.760$V (tail
+transistor leaves saturation) $\Rightarrow$ CMIR $=1.196$V wide.
+
+\textbf{Why the min VICM is not what I expected:} In Part 1 I did a naive hand estimate assuming the drain of
+the input pair stays fixed at $V_{OUT-CM}=0.6$V and just added $V_{ov}$ to it, giving $V_{ICM,min}\approx0.74$V.
+But that's completely wrong direction! What actually happens: the \emph{source} of the input pair transistor
+follows $V_{ICM}$ directly (source $=V_{ICM}+V_{SG}$). As I lower $V_{ICM}$, the source voltage drops right along
+with it, while the drain stays roughly at $V_{OUT-CM}$. So $V_{SD}$ of the input pair actually \emph{shrinks} as
+$V_{ICM}$ decreases, and only becomes a problem once $V_{ICM}$ gets pretty negative -- way below my naive
+estimate of 0.74V. That's why the real $V_{ICM,min}$ from simulation ($-0.436$V) is so much lower (more negative)
+than what the oversimplified hand formula predicted. The naive formula was checking the wrong direction of
+dependency.}
+
+\subsection{CM Large-Signal Characteristics -- GBW vs $V_{ICM}$}
+\begin{qbox}
+Use AC (start=1,stop=10,pts=1) with parametric sweep of $V_{ICM}=-1:50m:V_{DD}$. Report $A_{vd}$ vs $V_{ICM}$.
+Find CMIR assuming 90\% of max gain (10\% drop). Compare with the Vdsat method in a table.
+\end{qbox}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/cmir.png}
+\caption{$A_{vd}$ vs $V_{ICM}$ -- cursors mark the 10\% gain-drop points that define CMIR}
+\end{figure}
+
+\answer{The cursors sit at $V_{ICM}=-0.288$V and $V_{ICM}=0.833$V, where the gain has dropped to about 7.03/7.025
+(roughly 90\% of the $\approx7.8$ V/V flat-top gain) -- giving a CMIR width of $\Delta X=1.121$V as marked
+directly on the plot.}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lccc}
+\toprule
+\textbf{Method} & \textbf{$V_{ICM,min}$} & \textbf{$V_{ICM,max}$} & \textbf{CMIR width} \\
+\midrule
+$V_{DS}$ vs $V_{DSAT}$ (hard sat. edge) & $-0.436$ V & $0.760$ V & 1.196 V \\
+$A_{vd}$ 10\% drop (functional) & $-0.288$ V & $0.833$ V & 1.121 V \\
+\bottomrule
+\end{tabular}
+\caption{CMIR comparison: device-saturation method vs functional-gain method}
+\end{table}
+
+The two methods land in the same ballpark, with the $A_{vd}$-based CMIR being a bit narrower. That makes sense:
+the small-signal gain already starts dropping a little \emph{before} a transistor hits the hard triode edge
+(gm/ro start degrading gradually near the boundary), so the functional/gain-based method is naturally a bit
+more conservative than the strict $V_{DS}=V_{DSAT}$ device-level check.
+
+Finally, checking my chosen bias point: $V_{ICM}=0.559$V sits comfortably \emph{inside} both CMIR windows
+($-0.436$ to $0.760$V, and $-0.288$ to $0.833$V) -- so the design point is valid, resolving the concern I
+raised at the end of Part 1.
+
+\newpage
+% ======================================================================
+\section{Lab Summary}
+% ======================================================================
+\begin{itemize}[leftmargin=*]
+  \item In Part 1 I learned how to design a resistive-loaded differential amplifier from spec, using the
+  $g_m/I_D$ methodology and the Sizing Assistant for both the input pair and the tail current mirror
+  (including the mismatch-vs-lambda-vs-area tradeoff).
+  \item In Part 2 I learned how to simulate the small-signal differential gain, small-signal CM gain
+  (and CMRR), large-signal differential transfer characteristic, and large-signal CM characteristics
+  (both the device-saturation method and the functional gain-drop method for CMIR) of a differential
+  amplifier.
+\end{itemize}
+
+\section*{My Takeaways}
+\addcontentsline{toc}{section}{My Takeaways}
+Honestly the most useful part of this lab for me was realizing that hand-analysis shortcuts (like my first
+CMIR estimate) can point in completely the wrong direction if I don't carefully track which node is actually
+fixed and which one is moving -- simulation caught that immediately. Also cool to see the tail-node parasitic
+capacitance show up as an actual peak in the CM gain plot instead of just being an abstract ``second pole''
+concept from lecture. The $g_m/I_D$ design flow with SA made hitting the exact gain spec (7.82 V/V sim vs
+8 V/V target) pretty painless once the sizing was locked in.
+
+\end{document}
