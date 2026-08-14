@@ -3,8 +3,8 @@
 This repository contains my laboratory progress, circuit schematics, and simulation results for the ITI Analog IC Design course. The focus of these labs is strictly on transistor-level analog electronics design.
 
 ## 🛠️ Tools & Environments
-*   **Schematic Capture:** Xschem
-*   **Simulation:** Ngspice
+*   **Schematic Capture:** Xschem & cadence
+*   **Simulation:** Ngspice & spectre
 *   **Documentation:** LaTeX & Markdown
 
 ## 📂 Repository Structure
