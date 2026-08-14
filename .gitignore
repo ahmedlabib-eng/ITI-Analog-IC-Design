@@ -7,5 +7,6 @@
 # Exempt the aic_lectures_pdf directory and its contents
 !/aic_lectures_pdf/
 !/annonated/
+!/README.md
 # Exempt the .gitignore file itself so it gets uploaded to GitHub
 !.gitignore
