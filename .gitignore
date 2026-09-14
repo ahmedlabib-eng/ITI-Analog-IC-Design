@@ -9,4 +9,8 @@
 !/annonated/
 !/README.md
 # Exempt the .gitignore file itself so it gets uploaded to GitHub
-!.gitignore
+!.gitignore"*.mp4" 
+"*.mkv" 
+"*.mp4" 
+"*.mkv" 
+*.mp4
